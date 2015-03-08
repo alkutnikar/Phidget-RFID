@@ -1,0 +1,69 @@
+package com.informatica.powercenter.sdk.mapfwk.samples;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.informatica.powercenter.sdk.mapfwk.connection.SourceTargetType;
+import com.informatica.powercenter.sdk.mapfwk.core.Field;
+import com.informatica.powercenter.sdk.mapfwk.core.FieldKeyType;
+import com.informatica.powercenter.sdk.mapfwk.core.FieldType;
+import com.informatica.powercenter.sdk.mapfwk.core.GroupSet;
+import com.informatica.powercenter.sdk.mapfwk.core.GroupType;
+import com.informatica.powercenter.sdk.mapfwk.core.Mapping;
+import com.informatica.powercenter.sdk.mapfwk.core.OutputSet;
+import com.informatica.powercenter.sdk.mapfwk.core.RowSet;
+import com.informatica.powercenter.sdk.mapfwk.core.Session;
+import com.informatica.powercenter.sdk.mapfwk.core.Source;
+import com.informatica.powercenter.sdk.mapfwk.core.Target;
+import com.informatica.powercenter.sdk.mapfwk.core.TransformHelper;
+import com.informatica.powercenter.sdk.mapfwk.core.TransformationConstants;
+import com.informatica.powercenter.sdk.mapfwk.core.TransformationDataTypes;
+import com.informatica.powercenter.sdk.mapfwk.core.Workflow;
+
+/**
+*
+*Basic mapping file-AL
+*
+**/
+
+public class AggregatorForFlatFile  extends Base {
+	
+	public void createSession(){}
+	public void createMappings(){}
+	public void createTargets(){}
+	
+	public void createWorkflow(){}
+
+	protected Source SampleObj = null;
+	
+	public void createSources(){
+		System.out.print("Source");
+		SampleObj = this.createEmployeeSource();
+		folder.addSource(SampleObj);
+	}
+	
+	
+	
+		/**
+	     * @param args
+	     */
+	    public static void main( String[] args ) {
+	        try {
+	        	AggregatorForFlatFile customActive = new AggregatorForFlatFile();
+	            if (args.length > 0) {
+	                if (customActive.validateRunMode( args[0] )) {
+	                    customActive.execute();
+	                    System.out.print("Sour");
+	                }
+	            } else {
+	                customActive.printUsage();
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            System.err.println( "Exception is: " + e.getMessage() );
+	        }
+	    }
+	
+	
+
+}

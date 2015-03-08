@@ -1,0 +1,258 @@
+/**
+ * 
+ */
+package com.informatica.powercenter.sdk.mapfwk.samples;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import com.informatica.powercenter.sdk.mapfwk.connection.ConnectionInfo;
+import com.informatica.powercenter.sdk.mapfwk.connection.ConnectionProperties;
+import com.informatica.powercenter.sdk.mapfwk.connection.ConnectionPropsConstants;
+import com.informatica.powercenter.sdk.mapfwk.connection.SourceTargetType;
+import com.informatica.powercenter.sdk.mapfwk.core.Field;
+import com.informatica.powercenter.sdk.mapfwk.core.FieldKeyType;
+import com.informatica.powercenter.sdk.mapfwk.core.FieldType;
+import com.informatica.powercenter.sdk.mapfwk.core.InputSet;
+import com.informatica.powercenter.sdk.mapfwk.core.Mapping;
+import com.informatica.powercenter.sdk.mapfwk.core.MappingVariable;
+import com.informatica.powercenter.sdk.mapfwk.core.MappingVariableDataTypes;
+import com.informatica.powercenter.sdk.mapfwk.core.ParameterFile;
+import com.informatica.powercenter.sdk.mapfwk.core.ParameterFileIterator;
+import com.informatica.powercenter.sdk.mapfwk.core.RowSet;
+import com.informatica.powercenter.sdk.mapfwk.core.Session;
+import com.informatica.powercenter.sdk.mapfwk.core.Source;
+import com.informatica.powercenter.sdk.mapfwk.core.Target;
+import com.informatica.powercenter.sdk.mapfwk.core.TransformField;
+import com.informatica.powercenter.sdk.mapfwk.core.TransformHelper;
+import com.informatica.powercenter.sdk.mapfwk.core.TransformationDataTypes;
+import com.informatica.powercenter.sdk.mapfwk.core.Workflow;
+import com.informatica.powercenter.sdk.mapfwk.core.WorkflowVariable;
+import com.informatica.powercenter.sdk.mapfwk.core.WorkflowVariableDataTypes;
+import com.informatica.powercenter.sdk.mapfwk.exception.InvalidTransformationException;
+import com.informatica.powercenter.sdk.mapfwk.portpropagation.PortPropagationContext;
+import com.informatica.powercenter.sdk.mapfwk.portpropagation.PortPropagationContextFactory;
+
+/**
+*
+*Basic mapping file-AL
+*
+**/
+
+public class ParameterFileSample  extends Base2 {
+	
+	protected Target outputTarget;
+
+protected Source orderDetailSource;
+protected Source orderDetailSource2;
+	
+	protected void createSources() {
+		orderDetailSource = this.createManufacturersSource();
+    	ConnectionInfo connInfo = orderDetailSource.getConnInfo();
+		ConnectionProperties connProperties = connInfo.getConnProps();
+//		connInfo.setConnType(SourceTargetType.Oracle);
+		connProperties.setProperty(ConnectionPropsConstants.SOURCE_FILENAME, "$InputFileMyinputfilename");
+		
+		connProperties.setProperty(ConnectionPropsConstants.CONNECTIONNAME, "$DBConnectionMyconnection");
+		folder.addSource(orderDetailSource);
+		
+		orderDetailSource2 = this.createManufacturersSource2();
+    	ConnectionInfo connInfo2 = orderDetailSource2.getConnInfo();
+		ConnectionProperties connProperties2 = connInfo.getConnProps();
+//		connInfo.setConnType(SourceTargetType.Oracle);
+		connProperties.setProperty(ConnectionPropsConstants.SOURCE_FILENAME, "$InputFileMyinputfilename");
+		
+		connProperties.setProperty(ConnectionPropsConstants.CONNECTIONNAME, "$DBConnectionMyconnection");
+		folder.addSource(orderDetailSource2);
+	}
+	protected void createTargets() {
+		/*outputTarget = this.createFlatFileTarget("Parameter_Output");
+		ConnectionInfo connInfo = outputTarget.getConnInfo();
+		ConnectionProperties connProperties = connInfo.getConnProps();
+		connProperties.setProperty(ConnectionPropsConstants.OUTPUT_FILENAME, "$OutputFileMyoutputfilename");
+		connProperties.setProperty(ConnectionPropsConstants.REJECT_FILENAME, "$BadFileMybadfilename");
+	*/
+		 
+		    	outputTarget = this.createRelationalTarget( "Aggregate_Output_Oracle", SourceTargetType.Oracle);
+		    	
+	
+	}
+
+	
+	
+	/**
+	 * Create session
+	 */
+	protected void createSession() throws Exception {
+		session = new Session("Session_For_parameter_file", "Session_For_parameter_file",
+				"This is session for parameter file");
+		session.setMapping(mapping);
+		
+	}
+
+	  public void createMappings() throws InvalidTransformationException {
+		  
+		  mapping = new Mapping( "AAC", "AAC","Sample map" );
+		  
+		  setMapFileName( mapping );
+	     
+	    
+	     TransformHelper helper = new TransformHelper( mapping );
+	     
+	        RowSet rsGroupFld = new RowSet();
+	        Field field1 = new Field( "ManId", "ManId", "", TransformationDataTypes.INTEGER, "10", "0",
+	                FieldKeyType.NOT_A_KEY, FieldType.TRANSFORM, false );
+	        rsGroupFld.addField( field1 );
+	        Field field2 = new Field( "ManName", "ManName", "", TransformationDataTypes.STRING, "72",
+	                "0", FieldKeyType.NOT_A_KEY,FieldType.TRANSFORM, false );
+	        rsGroupFld.addField( field2 );
+	      
+	    
+	     
+	      // create DSQ Transformation 
+	     
+	     RowSet rs_dsq = (RowSet)helper.sourceQualifier( this.orderDetailSource ).getRowSets().get( 0 );
+	     RowSet rs_dsq2 = (RowSet)helper.sourceQualifier( this.orderDetailSource2 ).getRowSets().get( 0 );
+	     
+	   /*  
+	      // create aggregate transformation // calculate sum(call_cost) group by account_id 
+	     
+	     TransformField field1 = new TransformField( "integer total_call_cost=(Manufacturer_Id))"); 
+	     
+	     String[] groupBy = { "Manufacturer_Id" };
+	     
+	     RowSet rs_agg = (RowSet)helper.aggregate( rs_dsq, field1, groupBy, "Aggregate_Transformation" ).getRowSets().get( 0 );
+	      // write to target 
+	    */ 
+	     
+	    
+	     
+	     PortPropagationContext itemRSContext = PortPropagationContextFactory
+         .getContextForIncludeCols( new String[] { "Manufacturer_Id", "Manufacturer_Name" } );
+	     PortPropagationContext productRSContext = PortPropagationContextFactory
+         .getContextForIncludeCols( new String[] { "Product_Name", "Product_Id"} );
+ 
+	     List<InputSet> inputSets = new ArrayList<InputSet>();
+ 
+	     inputSets.add( new InputSet( rs_dsq, itemRSContext ) );
+	     inputSets.add( new InputSet( rs_dsq2, productRSContext ) );
+
+	     // create a Union Transformation
+	     RowSet unionRS = (RowSet) helper.union( inputSets,rsGroupFld , "Union_transform" )
+         .getRowSets().get( 0 );
+	     // write to target
+	     mapping.writeTarget( unionRS, outputTarget );
+	     
+	     folder.addMapping( mapping ); 
+	     
+	 
+	  }
+
+/*	public void createMappings() throws Exception {
+		  mapping = new Mapping( "AAC", "AAC",
+          "Sample map" );
+  setMapFileName( mapping );
+  TransformHelper helper = new TransformHelper( mapping );
+	RowSet dsqRS = (RowSet) helper.sourceQualifier(this.orderDetailSource)
+	.getRowSets().get(0);
+  
+//	mapping.writeTarget(arg0, outputTarget)
+  folder.addMapping( mapping );
+
+  
+  
+	}*/
+/*		// create a mapping
+		mapping = new Mapping("AL_map", "AL_map",
+				"This is sample for parameter file usage");
+		List<MappingVariable> vMappingVariables = getMappingVariables();
+		
+		Iterator<MappingVariable> mappingVarIter = vMappingVariables.iterator();		
+		while(mappingVarIter.hasNext())
+		{
+			mapping.addMappingVariable(mappingVarIter.next());
+		}
+		
+		setMapFileName(mapping);
+/*		TransformHelper helper = new TransformHelper(mapping);
+	
+		// creating DSQ Transformation
+		RowSet dsqRS = (RowSet) helper.sourceQualifier(this.orderDetailSource)
+				.getRowSets().get(0);
+
+		// create an aggregator Transformation
+		// calculate cost per order using the formula
+		// SUM((UnitPrice * Quantity) * (100 - Discount1) / 100) grouped by
+		// OrderId
+		TransformField cost = new TransformField(
+				"decimal(15,0) total_cost = (SUM((UnitPrice * Quantity) * (100 - Discount) / 100))");
+		RowSet aggRS = (RowSet) helper.aggregate(dsqRS, cost,
+				new String[] { "OrderID" }, "agg_transform").getRowSets()
+				.get(0);
+		// write to target
+		mapping.writeTarget(aggRS, this.outputTarget);
+
+		folder.addMapping(mapping);
+	}*/
+/*	private List<MappingVariable> getMappingVariables()
+	{
+		List<MappingVariable> vMappingVars = new ArrayList<MappingVariable>();
+		
+		// While creating mapping variables, we will use transformation data types as mapping variables 
+		// belong to mapping, not to source or target.
+		
+     	MappingVariable mpVar1 = new MappingVariable("MAX",MappingVariableDataTypes.STRING,"default value1","description",true,"$$var1","20","0",true);
+		MappingVariable mpVar2 = new MappingVariable("MIN",MappingVariableDataTypes.INTEGER,"100","description",false,"$$var2","10","0",true);
+		MappingVariable mpVar3 = new MappingVariable("MAX",MappingVariableDataTypes.NSTRING,"default value3","description",true,"$$var3","10","0",true);
+		MappingVariable mpVar4 = new MappingVariable("MAX",MappingVariableDataTypes.INTEGER,"101","description",false,"$$var4","10","0",true);
+		MappingVariable mpVar5 = new MappingVariable("MIN",MappingVariableDataTypes.STRING,"default value5","description",true,"$$var5","15","0",true);
+		MappingVariable mpVar6 = new MappingVariable("MAX",MappingVariableDataTypes.NSTRING,"default value6","description",false,"$$var6","20","0",true);
+		
+		vMappingVars.add(mpVar1);
+		vMappingVars.add(mpVar2);
+		vMappingVars.add(mpVar3);
+		vMappingVars.add(mpVar4);
+		vMappingVars.add(mpVar5);
+		vMappingVars.add(mpVar6);
+		
+		return vMappingVars;
+	}*/
+
+	
+
+	
+	public void createWorkflow(){
+		  workflow = new Workflow( "Workflow_for_CustomTransformation78",
+	                "Workflow_for_CustomTransformation78", "This workflow for Custom Transformation" );
+	        workflow.addSession( session );
+	        folder.addWorkFlow( workflow );
+	}
+
+	
+
+	
+	
+		/**
+	     * @param args
+	     */
+	    public static void main( String[] args ) {
+	        try {
+	        	ParameterFileSample customActive = new ParameterFileSample();
+	            if (args.length > 0) {
+	                if (customActive.validateRunMode( args[0] )) {
+	                    customActive.execute();
+	                    System.out.print("Sour");
+	                }
+	            } else {
+	                customActive.printUsage();
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            System.err.println( "Exception is: " + e.getMessage() );
+	        }
+	    }
+	
+	
+
+}
